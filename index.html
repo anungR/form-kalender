@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Form Input Acara</title>
+</head>
+<body>
+  <h2>Form Input Acara Kalender</h2>
+  <form id="calendar-form">
+    <input name="summary" placeholder="Judul Acara" required><br><br>
+    <textarea name="description" placeholder="Deskripsi" required></textarea><br><br>
+    <label>Waktu Mulai:</label><br>
+    <input name="start" type="datetime-local" required><br><br>
+    <label>Waktu Selesai:</label><br>
+    <input name="end" type="datetime-local" required><br><br>
+    <button type="submit">Kirim</button>
+  </form>
+
+  <p id="result"></p>
+
+  <script>
+    document.getElementById('calendar-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        summary: form.summary.value,
+        description: form.description.value,
+        start: new Date(form.start.value).toISOString(),
+        end: new Date(form.end.value).toISOString()
+      };
+
+      const res = await fetch('https://your-n8n-domain/webhook/calendar-input', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+      document.getElementById('result').innerHTML = `
+        <p><strong>${result.message}</strong></p>
+        <p><a href="${result.eventLink}" target="_blank">Lihat di Google Calendar</a></p>
+      `;
+    });
+  </script>
+</body>
+</html>
