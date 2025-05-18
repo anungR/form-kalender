@@ -1,44 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <title>Form Input Acara</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Form Undangan Kalender</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+      max-width: 600px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1rem;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 0.25rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 10px 20px;
+      background: #2d89ef;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1b5dbf;
+    }
+  </style>
 </head>
 <body>
-  <h2>Form Input Acara Kalender</h2>
-  <form id="calendar-form">
-    <input name="summary" placeholder="Judul Acara" required><br><br>
-    <textarea name="description" placeholder="Deskripsi" required></textarea><br><br>
-    <label>Waktu Mulai:</label><br>
-    <input name="start" type="datetime-local" required><br><br>
-    <label>Waktu Selesai:</label><br>
-    <input name="end" type="datetime-local" required><br><br>
-    <button type="submit">Kirim</button>
+  <h2>Form Undangan Acara</h2>
+  <form id="calendarForm">
+    <label>Judul Acara</label>
+    <input type="text" name="summary" required />
+
+    <label>Deskripsi</label>
+    <textarea name="description" required></textarea>
+
+    <label>Waktu Mulai</label>
+    <input type="datetime-local" name="start" required />
+
+    <label>Waktu Selesai</label>
+    <input type="datetime-local" name="end" required />
+
+    <label>Email Undangan (pisahkan dengan koma)</label>
+    <input type="text" name="attendeeEmails" placeholder="email1@example.com, email2@example.com" required />
+
+    <button type="submit">Kirim ke Kalender</button>
   </form>
 
-  <p id="result"></p>
+  <div id="result" style="margin-top: 2rem;"></div>
 
   <script>
-    document.getElementById('calendar-form').addEventListener('submit', async (e) => {
+    const form = document.getElementById("calendarForm");
+    const result = document.getElementById("result");
+
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const form = e.target;
-      const data = {
-        summary: form.summary.value,
-        description: form.description.value,
-        start: new Date(form.start.value).toISOString(),
-        end: new Date(form.end.value).toISOString()
+
+      const data = new FormData(form);
+      const payload = {
+        summary: data.get("summary"),
+        description: data.get("description"),
+        start: data.get("start"),
+        end: data.get("end"),
+        attendeeEmails: data.get("attendeeEmails")
+          .split(",")
+          .map(email => email.trim())
+          .filter(email => email.length > 0)
       };
 
-      const res = await fetch('https://your-n8n-domain/webhook/calendar-input', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      try {
+        const response = await fetch("https://your-n8n-domain/webhook/calendar-input", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
 
-      const result = await res.json();
-      document.getElementById('result').innerHTML = `
-        <p><strong>${result.message}</strong></p>
-        <p><a href="${result.eventLink}" target="_blank">Lihat di Google Calendar</a></p>
-      `;
+        const json = await response.json();
+        result.textContent = json.message || "Berhasil dikirim!";
+      } catch (err) {
+        result.textContent = "Gagal mengirim data. Periksa koneksi atau endpoint.";
+      }
     });
   </script>
 </body>
