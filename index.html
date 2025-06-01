@@ -11,8 +11,6 @@
       font-family: 'Inter', sans-serif;
       background-color: #f3f4f6; /* bg-gray-100 */
       padding: 1rem; /* p-4 */
-      /* Menghapus flexbox centering dari body untuk memungkinkan scrolling alami */
-      /* min-h-screen, items-center, justify-center dihapus */
     }
     .container-wrapper {
       background-color: #ffffff; /* bg-white */
@@ -22,6 +20,23 @@
       width: 100%; /* w-full */
       max-width: 400px; /* max-w-md */
       margin: 2rem auto; /* Menambahkan margin auto untuk centering horizontal dan margin vertikal */
+    }
+    .calendar-embed-container {
+        margin-top: 2rem;
+        background-color: #ffffff;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        max-width: 800px; /* Lebih lebar untuk kalender */
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .calendar-embed-container iframe {
+        width: 100%;
+        height: 600px; /* Tinggi default, bisa disesuaikan */
+        border: 0;
+        border-radius: 0.5rem;
     }
   </style>
 </head>
@@ -88,6 +103,14 @@
             <button id="closeMessageBox" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Tutup</button>
         </div>
     </div>
+  </div>
+
+  <div class="calendar-embed-container">
+    <h3 class="text-xl font-bold mb-4 text-gray-800 text-center">Google Kalender Organisasi</h3>
+    <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Asia%2FJakarta&showPrint=0&src=aXNpLXNrYUBnbS5pc2ktc2thLmFjLmlk&src=ZW4uaW5kb25lc2lhbiNob2xpZGF5QGdyb3VwLnYuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&color=%23039be5&color=%230b8043" style="border:solid 1px #777" width="800" height="600" frameborder="0" scrolling="no"></iframe>
+    <p class="mt-4 text-sm text-gray-600 text-center">
+      Pastikan kalender yang disematkan adalah kalender organisasi Anda dan memiliki izin "Public" atau "Share with specific people" yang sesuai.
+    </p>
   </div>
 
   <script>
@@ -164,7 +187,6 @@
         }
 
         const json = await response.json();
-        // Mengubah pesan sukses akhir
         showMessageBox(json.message || "undangan telah terkirim ke google kalender");
         result.textContent = "";
         form.reset();
