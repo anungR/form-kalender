@@ -429,3 +429,467 @@
   </script>
 </body>
 </html>
+```
+
+Anda benar, `Move Binary Data` node tidak diperlukan jika node Webhook sudah dikonfigurasi untuk menerima file biner. Node `Google Drive` dapat langsung memprosesnya.
+
+Berikut adalah file JSON alur kerja n8n yang telah diperbarui untuk menghilangkan node `Move Binary Data` dan menghubungkan `Webhook` langsung ke `Google Drive - Upload Event File`. Ini juga mencakup pembaruan pada node `Format Event Data` untuk mengakses data file dari output node Google Drive.
+
+**Penting:** Setelah mengimpor ini, pastikan Anda telah mengaktifkan opsi **"binary file"** di node **`Webhook - Create Event`** dan **`Webhook - Update Event`** di n8n Anda.
+
+
+```json
+{
+  "name": "kalender organisasi (buat, edit, hapus, upload)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d00c9760-1f93-43d3-8fad-94d81321aa93",
+        "options": {
+          "binaryFile": true
+        }
+      },
+      "id": "b85a070e-4fb3-444b-9932-7c49eac6bbb2",
+      "name": "Webhook - Create Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        260
+      ],
+      "webhookId": "d00c9760-1f93-43d3-8fad-94d81321aa93"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "resource": "file",
+        "binaryData": "eventFile",
+        "fileName": "={{$json.summary}} - Lampiran.{{$binary.eventFile.mimeType.split('/')[1]}}",
+        "access": "anyoneWithLink",
+        "additionalFields": {
+          "parents": [
+            ""
+          ]
+        }
+      },
+      "id": "google-drive-upload-file",
+      "name": "Google Drive - Upload Event File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 1,
+      "position": [
+        -950,
+        260
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U8owCLLzBv0O1ME8",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Ambil data dari body webhook (dari node Webhook)\nconst webhookBody = $input.first().json.body;\n\n// Ambil data dari output node Google Drive (jika ada file yang diunggah)\nconst googleDriveOutput = $input.first().json; // Output dari Google Drive adalah input node ini\nlet fileLink = '';\nif (googleDriveOutput && googleDriveOutput.webViewLink) {\n    fileLink = `\\n\\nLampiran Dokumen: ${googleDriveOutput.webViewLink}`;\n}\n\n// Proses attendeeEmails menjadi format string yang dipisahkan koma\nconst attendeesString = webhookBody.attendeeEmails.join(',');\n\n// Siapkan recurrence (jika bukan 'none')\nlet recurrence = [];\nif (webhookBody.recurrence && webhookBody.recurrence !== 'none') {\n    let rrule = '';\n    switch (webhookBody.recurrence) {\n        case 'daily':\n            rrule = 'RRULE:FREQ=DAILY';\n            break;\n        case 'weekly':\n            const startDate = new Date(webhookBody.start);\n            const dayOfWeek = startDate.toLocaleString('en-US', { weekday: 'short' }).toUpperCase().substring(0,2);\n            rrule = `RRULE:FREQ=WEEKLY;BYDAY=${dayOfWeek}`;\n            break;\n        case 'monthly':\n            const dayOfMonth = new Date(webhookBody.start).getDate();\n            rrule = `RRULE:FREQ=MONTHLY;BYMONTHDAY=${dayOfMonth}`;\n            break;\n    }\n    if (rrule) {\n        recurrence.push(rrule);\n    }\n}\n\n// Buat objek output yang akan digunakan oleh node Google Calendar\nconst outputJson = {\n    summary: webhookBody.summary,\n    description: webhookBody.description + fileLink, // Deskripsi yang sudah diperbarui dengan tautan file\n    start: webhookBody.start,\n    end: webhookBody.end,\n    location: webhookBody.location,\n    attendees: attendeesString,\n    adminEmail: webhookBody.adminEmail\n};\n\n// Hanya sertakan field RRULE jika ada pola pengulangan yang dipilih\nif (recurrence.length > 0) {\n    outputJson.RRULE = recurrence;\n}\n\n// Teruskan eventId jika ada (untuk operasi update)\nif (webhookBody.eventId) {\n    outputJson.eventId = webhookBody.eventId;\n}\n\nreturn [{ json: outputJson }];\n"
+      },
+      "id": "format-event-data-with-file",
+      "name": "Format Event Data (with file link)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": [
+          {
+            "value1": "={{$json.eventId}}",
+            "value2": "true",
+            "operator": "isNotNull"
+          }
+        ]
+      },
+      "id": "if-is-update-event",
+      "name": "IF - Is Update Event?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -450,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "calendar": "primary",
+        "start": "={{$json[\"start\"]}}",
+        "end": "={{$json[\"end\"]}}",
+        "additionalFields": {
+          "attendees": "={{$json.attendees}}",
+          "description": "={{$json.description}}",
+          "location": "={{$json.location}}",
+          "rrule": "={{$json.RRULE}}",
+          "sendUpdates": "all",
+          "summary": "={{$json.summary}}"
+        }
+      },
+      "id": "google-calendar-create-event",
+      "name": "Google Calendar - Create Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        180
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "U8owCLLzBv0O1ME8",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseMode": "json",
+        "jsonBody": "={\n  \"message\": \"undangan telah terkirim ke google kalender\",\n  \"eventId\": \"{{ $json.id }}\",\n  \"eventLink\": \"{{ $json.htmlLink }}\"\n}"
+      },
+      "id": "respond-to-webhook-create",
+      "name": "Respond to Webhook - Create",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        50,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "get-event-details",
+        "options": {}
+      },
+      "id": "webhook-get-event-details",
+      "name": "Webhook - Get Event Details",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "resource": "event",
+        "calendar": "primary",
+        "eventId": "={{$json.query.eventId}}"
+      },
+      "id": "google-calendar-get-event",
+      "name": "Google Calendar - Get Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [
+        -950,
+        460
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "U8owCLLzBv0O1ME8",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseMode": "json",
+        "jsonBody": "={{$json}}"
+      },
+      "id": "respond-to-webhook-get",
+      "name": "Respond to Webhook - Get",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "update-event",
+        "options": {
+          "binaryFile": true
+        }
+      },
+      "id": "webhook-update-event",
+      "name": "Webhook - Update Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "resource": "event",
+        "calendar": "primary",
+        "eventId": "={{$json.eventId}}",
+        "additionalFields": {
+          "attendees": "={{$json.attendees}}",
+          "description": "={{$json.description}}",
+          "location": "={{$json.location}}",
+          "rrule": "={{$json.RRULE}}",
+          "sendUpdates": "all",
+          "summary": "={{$json.summary}}"
+        }
+      },
+      "id": "google-calendar-update-event",
+      "name": "Google Calendar - Update Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        340
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "U8owCLLzBv0O1ME8",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseMode": "json",
+        "jsonBody": "={\n  \"message\": \"Acara berhasil diperbarui!\"\n}"
+      },
+      "id": "respond-to-webhook-update",
+      "name": "Respond to Webhook - Update",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        50,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "delete-event",
+        "options": {}
+      },
+      "id": "webhook-delete-event",
+      "name": "Webhook - Delete Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "resource": "event",
+        "calendar": "primary",
+        "eventId": "={{$json.query.eventId}}"
+      },
+      "id": "google-calendar-delete-event",
+      "name": "Google Calendar - Delete Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [
+        -950,
+        860
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "U8owCLLzBv0O1ME8",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseMode": "json",
+        "jsonBody": "={\n  \"message\": \"Acara berhasil dihapus!\"\n}"
+      },
+      "id": "respond-to-webhook-delete",
+      "name": "Respond to Webhook - Delete",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        860
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Create Event": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Upload Event File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive - Upload Event File": {
+      "main": [
+        [
+          {
+            "node": "Format Event Data (with file link)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Event Data (with file link)": {
+      "main": [
+        [
+          {
+            "node": "IF - Is Update Event?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Is Update Event?": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar - Update Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "else": [
+        [
+          {
+            "node": "Google Calendar - Create Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar - Create Event": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook - Create": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook - Get Event Details": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar - Get Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar - Get Event": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook - Get": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook - Update Event": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Upload Event File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar - Update Event": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook - Update": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook - Delete Event": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar - Delete Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar - Delete Event": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook - Delete": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2ee458f4-cede-4d97-93d5-ff3eabebda27",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fcd299f5a5697299d719cdc3bbdc21922be484b700099c7262b510ec5f0fd802"
+  },
+  "id": "kalender-dengan-upload-file",
+  "tags": []
+}
