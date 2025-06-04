@@ -147,7 +147,7 @@
 
   <div class="calendar-embed-container">
     <h3 class="text-xl font-bold mb-4 text-gray-800 text-center">Google Kalender Organisasi</h3>
-    <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Asia%2FJakarta&showPrint=0&src=aXNpLXNrYUBnbS5pc2ktc2thLmFjLmlk&src=ZW4uaW5kb25lc2lhbiNob2xpZGF5QGdyb3VwLnYuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&color=%23039be5&color=%230b8043" style="border:solid 1px #777" width="800" height="600" frameborder="0" scrolling="no"></iframe>
+    <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Asia%2FJakarta&showPrint=0&src=aXNpLXNrYUBnbS5pc2ktc2thLmFjLmlk&src=ZW4uaW5kb25lc2lhbiNob2xpZGF5QGdyb3VwLnYuY2FsZWVuZGFyLmNvbQ&color=%23039be5&color=%230b8043" style="border:solid 1px #777" width="800" height="600" frameborder="0" scrolling="no"></iframe>
     <p class="mt-4 text-sm text-gray-600 text-center">
       Pastikan kalender yang disematkan adalah kalender organisasi Anda dan memiliki izin "Public" atau "Share with specific people" yang sesuai.
     </p>
@@ -193,6 +193,20 @@
     closeMessageBox.addEventListener("click", hideMessageBox);
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Fungsi untuk mengkonversi File menjadi Base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                // Hapus bagian "data:image/jpeg;base64," atau "data:application/pdf;base64,"
+                const base64String = reader.result.split(',')[1];
+                resolve(base64String);
+            };
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+        });
+    }
 
     // Fungsi untuk mereset formulir ke keadaan kosong (mode buat baru)
     function resetFormToCreateMode() {
@@ -340,7 +354,8 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const data = new FormData(form); // Menggunakan FormData untuk menangani file
+      const data = new FormData(form); // Menggunakan FormData untuk menangani field teks
+
       const startDateTime = new Date(data.get("start"));
       const endDateTime = new Date(data.get("end"));
 
@@ -366,6 +381,9 @@
       const file = eventFileInput.files[0];
       const MAX_FILE_SIZE_MB = 5;
       const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024; // 5 MB
+      let base64File = null;
+      let fileName = null;
+      let fileType = null;
 
       if (file) {
           if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -377,17 +395,37 @@
               showMessageBox("Hanya file PDF, JPG, atau JPEG yang diizinkan.");
               return;
           }
+          // Mengkodekan file menjadi Base64
+          base64File = await fileToBase64(file);
+          fileName = file.name;
+          fileType = file.type;
       }
 
       const eventId = data.get("currentEventId"); // Ambil ID acara dari hidden input
 
-      // FormData sudah berisi semua field input, termasuk file.
-      // Kita perlu menambahkan field lain secara manual ke FormData jika tidak ada di HTML.
-      // Untuk eventId dan isEditMode, kita bisa tambahkan langsung ke FormData.
+      // Buat payload JSON yang akan dikirim ke n8n
+      const payload = {
+        adminEmail: data.get("adminEmail"),
+        summary: data.get("summary"),
+        description: data.get("description"),
+        start: data.get("start"),
+        end: data.get("end"),
+        location: data.get("location"),
+        recurrence: data.get("recurrence"),
+        attendeeEmails: attendeeEmails, // Ini sekarang adalah array string yang sudah difilter
+        // Tambahkan data file Base64 jika ada
+        fileData: base64File,
+        fileName: fileName,
+        fileType: fileType
+      };
+
+      // Tambahkan eventId dan isEditMode ke payload jika dalam mode edit
       if (isEditMode && eventId) {
-          data.append("eventId", eventId); // Tambahkan eventId ke FormData untuk update
+          payload.eventId = eventId;
+          payload.isEditMode = isEditMode;
+      } else {
+          payload.isEditMode = false; // Pastikan ini selalu ada
       }
-      data.append("isEditMode", isEditMode); // Tambahkan status mode edit
 
       let webhookUrl = "https://n8.isi-ska.ac.id/webhook-test/d00c9760-1f93-43d3-8fad-94d81321aa93"; // URL untuk Create Event
       let successMessage = "undangan telah terkirim ke google kalender";
@@ -402,9 +440,8 @@
         
         const response = await fetch(webhookUrl, {
           method: "POST",
-          // PENTING: HAPUS header Content-Type: application/json saat mengirim FormData
-          // Browser akan otomatis mengatur Content-Type: multipart/form-data
-          body: data // Kirim FormData langsung
+          headers: { "Content-Type": "application/json" }, // Kirim sebagai JSON
+          body: JSON.stringify(payload) // Stringify payload JSON
         });
 
         if (!response.ok) {
