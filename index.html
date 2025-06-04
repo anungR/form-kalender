@@ -117,7 +117,7 @@
         <p class="mt-1 text-xs text-gray-500">Pastikan email adalah anggota organisasi Anda.</p>
       </div>
 
-      <!-- BAGIAN BARU UNTUK UPLOAD FILE -->
+      <!-- BAGIAN UNTUK UPLOAD FILE (FormData) -->
       <div>
         <label for="eventFile" class="block text-sm font-medium text-gray-700">Lampirkan Dokumen (PDF/JPG Opsional)</label>
         <input type="file" id="eventFile" name="eventFile" accept=".pdf,.jpg,.jpeg" class="mt-1 block w-full text-sm text-gray-500
@@ -128,7 +128,7 @@
           hover:file:bg-blue-100"/>
         <p class="mt-1 text-xs text-gray-500">Maks. ukuran file 5MB. Hanya PDF, JPG, JPEG.</p>
       </div>
-      <!-- AKHIR BAGIAN BARU -->
+      <!-- AKHIR BAGIAN UPLOAD FILE -->
 
       <button type="submit" id="submitButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
         Buat Acara Baru
@@ -193,20 +193,6 @@
     closeMessageBox.addEventListener("click", hideMessageBox);
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    // Fungsi untuk mengkonversi File menjadi Base64
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                // Hapus bagian "data:image/jpeg;base64," atau "data:application/pdf;base64,"
-                const base64String = reader.result.split(',')[1];
-                resolve(base64String);
-            };
-            reader.onerror = error => reject(error);
-            reader.readAsDataURL(file);
-        });
-    }
 
     // Fungsi untuk mereset formulir ke keadaan kosong (mode buat baru)
     function resetFormToCreateMode() {
@@ -381,9 +367,9 @@
       const file = eventFileInput.files[0];
       const MAX_FILE_SIZE_MB = 5;
       const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024; // 5 MB
-      let base64File = null;
-      let fileName = null;
-      let fileType = null;
+      // let base64File = null; // Tidak lagi diperlukan untuk FormData
+      // let fileName = null; // Tidak lagi diperlukan untuk FormData
+      // let fileType = null; // Tidak lagi diperlukan untuk FormData
 
       if (file) {
           if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -395,37 +381,22 @@
               showMessageBox("Hanya file PDF, JPG, atau JPEG yang diizinkan.");
               return;
           }
-          // Mengkodekan file menjadi Base64
-          base64File = await fileToBase64(file);
-          fileName = file.name;
-          fileType = file.type;
+          // Untuk FormData, file sudah otomatis ditambahkan ke objek 'data'
+          // Tidak perlu Base64 encoding di sisi klien untuk FormData
       }
 
       const eventId = data.get("currentEventId"); // Ambil ID acara dari hidden input
 
-      // Buat payload JSON yang akan dikirim ke n8n
-      const payload = {
-        adminEmail: data.get("adminEmail"),
-        summary: data.get("summary"),
-        description: data.get("description"),
-        start: data.get("start"),
-        end: data.get("end"),
-        location: data.get("location"),
-        recurrence: data.get("recurrence"),
-        attendeeEmails: attendeeEmails, // Ini sekarang adalah array string yang sudah difilter
-        // Tambahkan data file Base64 jika ada
-        fileData: base64File,
-        fileName: fileName,
-        fileType: fileType
-      };
-
-      // Tambahkan eventId dan isEditMode ke payload jika dalam mode edit
+      // FormData sudah berisi semua field input, termasuk file.
+      // Kita perlu menambahkan field lain secara manual ke FormData jika tidak ada di HTML.
+      // Untuk eventId dan isEditMode, kita bisa tambahkan langsung ke FormData.
       if (isEditMode && eventId) {
-          payload.eventId = eventId;
-          payload.isEditMode = isEditMode;
-      } else {
-          payload.isEditMode = false; // Pastikan ini selalu ada
+          data.append("eventId", eventId); // Tambahkan eventId ke FormData untuk update
       }
+      data.append("isEditMode", isEditMode); // Tambahkan status mode edit
+
+      // Attendees perlu diubah dari array ke string untuk FormData
+      data.set("attendeeEmails", attendeeEmails.join(',')); // Ubah array kembali ke string koma-separated
 
       let webhookUrl = "https://n8.isi-ska.ac.id/webhook-test/d00c9760-1f93-43d3-8fad-94d81321aa93"; // URL untuk Create Event
       let successMessage = "undangan telah terkirim ke google kalender";
@@ -440,13 +411,22 @@
         
         const response = await fetch(webhookUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" }, // Kirim sebagai JSON
-          body: JSON.stringify(payload) // Stringify payload JSON
+          // PENTING: HAPUS header Content-Type: application/json saat mengirim FormData
+          // Browser akan otomatis mengatur Content-Type: multipart/form-data
+          body: data // Kirim FormData langsung
         });
 
         if (!response.ok) {
-            const errorData = await response.json(); // Coba parse sebagai JSON untuk error
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            // Jika respons bukan OK, coba baca sebagai teks jika bukan JSON
+            const errorText = await response.text(); 
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMessage = errorJson.message || errorMessage;
+            } catch (e) {
+                errorMessage = errorText || errorMessage; // Gunakan teks mentah jika bukan JSON
+            }
+            throw new Error(errorMessage);
         }
 
         const json = await response.json(); // Respons dari n8n diharapkan JSON
