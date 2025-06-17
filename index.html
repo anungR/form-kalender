@@ -297,8 +297,8 @@
             eventIdInput.value = eventIdToLoad; // Set hidden eventId for form submission
             document.getElementById("summary").value = eventData.summary || "";
             document.getElementById("description").value = eventData.description || "";
-            document.getElementById("start").value = eventData.start ? new Date(eventData.start.dateTime || eventData.start.date).toISOString().slice(0, 16) : "";
-            document.getElementById("end").value = eventData.end ? new Date(eventData.end.dateTime || eventData.end.date).toISOString().slice(0, 16) : "";
+            document.getElementById("start").value = eventData.start ? (eventData.start.dateTime || eventData.start.date).slice(0, 16) : "";
+            document.getElementById("end").value = eventData.end ? (eventData.end.dateTime || eventData.end.date).slice(0, 16) : "";
             document.getElementById("location").value = eventData.location || "";
             
             const recurrenceSelect = document.getElementById("recurrence");
