@@ -438,9 +438,14 @@
         const start = document.getElementById("start").value;
         const end = document.getElementById("end").value;
         const adminEmail = document.getElementById("adminEmail").value;
+        const attendeeEmails = document.getElementById("attendeeEmails").value;
 
-        if (!start || !end || !adminEmail) {
-            showMessageBox("Harap isi Email Admin, Waktu Mulai, dan Waktu Selesai untuk mengecek ketersediaan.");
+        if (!start || !end) {
+            showMessageBox("Harap isi Waktu Mulai dan Waktu Selesai untuk mengecek ketersediaan.");
+            return;
+        }
+        if (!adminEmail && !attendeeEmails) {
+            showMessageBox("Harap isi Email Admin atau Email Undangan untuk mengecek ketersediaan.");
             return;
         }
 
@@ -453,11 +458,10 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ start, end, adminEmail }),
+                body: JSON.stringify({ start, end, adminEmail, attendeeEmails }),
             });
 
-            // --- PERBAIKAN ERROR HANDLING UNTUK RESPON KOSONG ---
-            if (!response.ok) { // Jika respons bukan OK (misal: 404, 500)
+            if (!response.ok) {
               throw new Error(`Server merespons dengan status: ${response.status}`);
             }
 
@@ -480,8 +484,6 @@
                 availabilityResult.textContent = "Server tidak memberikan respons. Periksa workflow n8n.";
                 availabilityResult.className = "mt-2 text-center text-sm font-medium text-red-600";
             }
-            // --- AKHIR PERBAIKAN ---
-
         } catch (error) {
             availabilityResult.textContent = "Gagal mengecek ketersediaan. Periksa koneksi.";
             availabilityResult.className = "mt-2 text-center text-sm font-medium text-red-600";
