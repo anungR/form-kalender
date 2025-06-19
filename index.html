@@ -19,7 +19,6 @@
       border-radius: 0.5rem; /* rounded-lg */
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); /* shadow-lg */
       width: 100%; /* w-full */
-      /* PERUBAHAN BARU: Melebarkan container untuk kenyamanan visual di desktop */
       max-width: 576px; /* max-w-lg */
       margin: 2rem auto;
     }
@@ -236,27 +235,56 @@
     let originalDeleteButtonText = deleteEventButton.textContent;
 
     // --- Fungsi Bantuan ---
-    
-    // PERUBAHAN BARU: Fungsi untuk menyalin teks ke clipboard
-    function copyToClipboard(text, buttonElement) {
-        // Fallback method
+
+    // PERUBAHAN BARU: Fungsi fallback untuk menyalin ke clipboard
+    function fallbackCopyTextToClipboard(text, buttonElement) {
         const textarea = document.createElement('textarea');
         textarea.value = text;
+        textarea.style.position = 'fixed'; // Agar tidak mengganggu layout
         document.body.appendChild(textarea);
+        textarea.focus();
         textarea.select();
         try {
             document.execCommand('copy');
-            // Beri notifikasi singkat bahwa teks berhasil disalin
             const originalText = buttonElement.textContent;
             buttonElement.textContent = 'Tersalin!';
+            buttonElement.disabled = true;
             setTimeout(() => {
                 buttonElement.textContent = originalText;
+                buttonElement.disabled = false;
             }, 1500);
         } catch (err) {
-            console.error('Gagal menyalin teks: ', err);
-            alert('Gagal menyalin ID.');
+            console.error('Gagal menyalin teks dengan metode fallback: ', err);
+            const originalText = buttonElement.textContent;
+            buttonElement.textContent = 'Gagal!';
+            setTimeout(() => {
+                buttonElement.textContent = originalText;
+            }, 2000);
         }
         document.body.removeChild(textarea);
+    }
+
+    // PERUBAHAN BARU: Fungsi utama untuk menyalin teks ke clipboard (Modern + Fallback)
+    function copyToClipboard(text, buttonElement) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            // Metode Modern (Asynchronous)
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = buttonElement.textContent;
+                buttonElement.textContent = 'Tersalin!';
+                buttonElement.disabled = true; // Nonaktifkan tombol sementara
+                setTimeout(() => {
+                    buttonElement.textContent = originalText;
+                    buttonElement.disabled = false;
+                }, 1500);
+            }).catch(err => {
+                console.error('Gagal menyalin teks dengan API modern: ', err);
+                // Jika gagal, coba metode fallback di bawah
+                fallbackCopyTextToClipboard(text, buttonElement); 
+            });
+        } else {
+            // Panggil metode fallback jika API clipboard tidak didukung
+            fallbackCopyTextToClipboard(text, buttonElement);
+        }
     }
 
     function showMessageBox(message, eventId = null, eventLink = null, isConfirmation = false, confirmCallback = null) {
@@ -265,8 +293,8 @@
         customDialogButtons.innerHTML = "";
 
         if (eventId) {
-            // PERUBAHAN BARU: Menambahkan tombol "Salin"
             let eventIdHtml = `<p class="mt-2"><strong>ID Acara:</strong> <span>${eventId}</span>`;
+            // Pemanggilan fungsi copyToClipboard tetap sama
             eventIdHtml += ` <button onclick="copyToClipboard('${eventId}', this)" class="ml-2 px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300" title="Salin ID">Salin</button>`;
             eventIdHtml += `</p>`;
             eventDetailsOutput.innerHTML += eventIdHtml;
