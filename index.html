@@ -128,8 +128,8 @@
       </div>
 
       <div>
-        <label for="attendeeEmails" class="block text-sm font-medium text-gray-700">Email Undangan (pisahkan dengan koma)</label>
-        <input type="text" id="attendeeEmails" name="attendeeEmails" placeholder="email1@organisasi.com, email2@organisasi.com" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
+        <label for="attendeeEmails" class="block text-sm font-medium text-gray-700">Email Undangan (pisahkan dengan koma, spasi, atau titik koma)</label>
+        <input type="text" id="attendeeEmails" name="attendeeEmails" placeholder="email1@org.com, email2@org.com" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
       </div>
       
       <!-- Bagian untuk unggah file lampiran -->
@@ -182,7 +182,6 @@
       </button>
     </div>
     
-    <!-- PERUBAHAN: Menambahkan atribut 'title' untuk aksesibilitas -->
     <iframe id="calendar-iframe" title="Kalender Acara ISI Surakarta" src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Asia%2FJakarta&showPrint=0&src=aXNpLXNrYUBnbS5pc2ktc2thLmFjLmlk&src=ZW4uaW5kb25lc2lhbiNob2xpZGF5QGdyb3VwLnYuY2FsZWVuZGFyLmNvbQ&color=%23039be5&color=%230b8043" style="border:solid 1px #777" width="800" height="600" frameborder="0" scrolling="no"></iframe>
   </div>
 
@@ -225,6 +224,10 @@
     
     const checkAvailabilityButton = document.getElementById("checkAvailabilityButton");
     const availabilityResult = document.getElementById("availabilityResult");
+
+    // PERUBAHAN BARU: Deklarasi elemen input waktu untuk event listener
+    const startInput = document.getElementById("start");
+    const endInput = document.getElementById("end");
 
     // Variabel untuk menyimpan state
     let isEditMode = false;
@@ -299,6 +302,62 @@
         result.textContent = "";
         availabilityResult.textContent = "";
     }
+    
+    // PERUBAHAN BARU: Fungsi untuk mengisi form dari data acara (Ekstraksi Logika)
+    function populateForm(eventData) {
+        document.getElementById("summary").value = eventData.summary || "";
+        const descriptionText = eventData.description || "";
+        document.getElementById("description").value = descriptionText;
+        document.getElementById("start").value = eventData.start ? (eventData.start.dateTime || eventData.start.date).slice(0, 16) : "";
+        document.getElementById("end").value = eventData.end ? (eventData.end.dateTime || eventData.end.date).slice(0, 16) : "";
+        document.getElementById("location").value = eventData.location || "";
+        
+        const recurrenceSelect = document.getElementById("recurrence");
+        if (eventData.recurrence && eventData.recurrence.length > 0) {
+            const rrule = eventData.recurrence[0];
+            if (rrule.includes("FREQ=DAILY")) recurrenceSelect.value = "daily";
+            else if (rrule.includes("FREQ=WEEKLY")) recurrenceSelect.value = "weekly";
+            else if (rrule.includes("FREQ=MONTHLY")) recurrenceSelect.value = "monthly";
+            else recurrenceSelect.value = "none";
+        } else {
+            recurrenceSelect.value = "none";
+        }
+
+        const attendeeEmailsInput = document.getElementById("attendeeEmails");
+        if (eventData.attendees && Array.isArray(eventData.attendees)) {
+          attendeeEmailsInput.value = eventData.attendees.map(a => a.email).join(', ');
+        } else {
+          attendeeEmailsInput.value = "";
+        }
+        
+        // PERUBAHAN BARU: Deteksi dan tampilkan lampiran dari deskripsi
+        currentAttachmentsContainer.innerHTML = ''; 
+        removeAttachmentWrapper.classList.add('hidden');
+        removeAttachmentCheckbox.checked = false;
+        const driveLinkRegex = /https:\/\/drive\.google\.com\/(?:file\/d\/|drive\/folders\/)[a-zA-Z0-9_-]+\/[^?]+\?usp=sharing/g;
+        const matches = descriptionText.match(driveLinkRegex);
+
+        if (matches && matches.length > 0) {
+            let attachmentsHtml = '<p class="font-medium text-gray-700 mt-4">Lampiran saat ini:</p><ul class="list-disc list-inside space-y-1">';
+            matches.forEach(link => {
+                const fileName = link.split('/')[5]; // Ambil ID sebagai nama file sementara
+                attachmentsHtml += `<li><a href="${link}" target="_blank" class="text-blue-600 hover:underline">Lampiran (${fileName.substring(0,10)}...)</a></li>`;
+            });
+            attachmentsHtml += '</ul>';
+            currentAttachmentsContainer.innerHTML = attachmentsHtml;
+
+            // Juga tampilkan opsi untuk menghapus lampiran
+            removeAttachmentWrapper.classList.remove('hidden');
+        } else {
+            removeAttachmentWrapper.classList.add('hidden');
+        }
+    }
+
+    // PERUBAHAN BARU: Fungsi untuk membersihkan status ketersediaan
+    function clearAvailabilityStatus() {
+        availabilityResult.textContent = "";
+    }
+
 
     // --- Event Listeners ---
 
@@ -343,33 +402,9 @@
             const eventData = await response.json();
             
             eventIdInput.value = eventIdToLoad;
-            document.getElementById("summary").value = eventData.summary || "";
-            document.getElementById("description").value = eventData.description || "";
-            document.getElementById("start").value = eventData.start ? (eventData.start.dateTime || eventData.start.date).slice(0, 16) : "";
-            document.getElementById("end").value = eventData.end ? (eventData.end.dateTime || eventData.end.date).slice(0, 16) : "";
-            document.getElementById("location").value = eventData.location || "";
             
-            const recurrenceSelect = document.getElementById("recurrence");
-            if (eventData.recurrence && eventData.recurrence.length > 0) {
-                const rrule = eventData.recurrence[0];
-                if (rrule.includes("FREQ=DAILY")) recurrenceSelect.value = "daily";
-                else if (rrule.includes("FREQ=WEEKLY")) recurrenceSelect.value = "weekly";
-                else if (rrule.includes("FREQ=MONTHLY")) recurrenceSelect.value = "monthly";
-                else recurrenceSelect.value = "none";
-            } else {
-                recurrenceSelect.value = "none";
-            }
-
-            const attendeeEmailsInput = document.getElementById("attendeeEmails");
-            if (eventData.attendees && Array.isArray(eventData.attendees)) {
-              attendeeEmailsInput.value = eventData.attendees.map(a => a.email).join(', ');
-            } else {
-              attendeeEmailsInput.value = "";
-            }
-            
-            currentAttachmentsContainer.innerHTML = '';
-            removeAttachmentWrapper.classList.add('hidden');
-            removeAttachmentCheckbox.checked = false;
+            // PERUBAHAN BARU: Panggil fungsi terpusat untuk mengisi form
+            populateForm(eventData);
 
             showMessageBox("Detail acara berhasil dimuat.");
             result.textContent = "";
@@ -490,6 +525,10 @@
         }
     });
 
+    // PERUBAHAN BARU: Tambahkan event listener untuk membersihkan status ketersediaan
+    startInput.addEventListener('change', clearAvailabilityStatus);
+    endInput.addEventListener('change', clearAvailabilityStatus);
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       result.textContent = "Mengirim data...";
@@ -521,8 +560,9 @@
       }
 
       const attendeeEmailsRaw = data.get("attendeeEmails");
+      // PERUBAHAN BARU: Penanganan input email yang lebih fleksibel
       const attendeeEmails = attendeeEmailsRaw
-        .split(",")
+        .split(/[\s,;]+/) // Memisahkan dengan spasi, koma, atau titik koma
         .map(email => email.trim())
         .filter(email => email.length > 0);
 
