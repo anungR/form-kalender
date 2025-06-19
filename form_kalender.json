@@ -1,0 +1,1033 @@
+{
+  "name": "form-kalender",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bc611697-3a8c-4f01-91f6-62750d8ad8a2",
+              "leftValue": "={{$json.hasNewAttachment}}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6a5bbfa8-6265-409d-a23f-9f9ae3fa53a2",
+      "name": "If New File Uploaded?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -500,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "={{ $json.binaryPropertyName }}",
+        "name": "={{$json.originalFileName}}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -320,
+        0
+      ],
+      "id": "2160580d-972d-428d-ac24-637919782da4",
+      "name": "Google Drive - Upload File",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "eUeGE2F0i5oQ7oT3",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1s2d3f4-g5h6-j7k8-l9m0-n1b2v3c4x5z6",
+              "name": "description",
+              "value": "={{ $items(\"Format Event Data\")[0].json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "q9w8e7r6-t5y4-u3i2-o1p0-a1s2d3f4g5h6",
+              "name": "attachments",
+              "value": "={{ [{ \"fileUrl\": $items(\"Google Drive - Upload File\")[0].json.webContentLink, \"title\": $items(\"Google Drive - Upload File\")[0].json.name }] }}",
+              "type": "array"
+            },
+            {
+              "id": "01d9fe9b-e26d-4716-bcc0-aa2c1870b25f",
+              "name": "summary",
+              "value": "={{ $items(\"Format Event Data\")[0].json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "9b976578-5356-4b13-ba05-50fc0ecb187c",
+              "name": "start",
+              "value": "={{ $items(\"Format Event Data\")[0].json.start }}",
+              "type": "string"
+            },
+            {
+              "id": "5602f37b-0563-42a6-855a-3246d7924865",
+              "name": "end",
+              "value": "={{ $items(\"Format Event Data\")[0].json.end }}",
+              "type": "string"
+            },
+            {
+              "id": "cff44a26-b145-45d2-9eb6-0e7862060906",
+              "name": "attendees",
+              "value": "={{ $items(\"Format Event Data\")[0].json.attendees.map(attendee => attendee.email).join(',') }}",
+              "type": "string"
+            },
+            {
+              "id": "081e55be-b060-4d36-8230-1489b29467b3",
+              "name": "location",
+              "value": "={{ $items(\"Format Event Data\")[0].json.location }}",
+              "type": "string"
+            },
+            {
+              "id": "662ebb66-2738-4836-82c6-fd0fd4c6b650",
+              "name": "RRULE",
+              "value": "={{ $items(\"Format Event Data\")[0].json.RRULE }}",
+              "type": "string"
+            },
+            {
+              "id": "11cab42d-3857-48ab-a184-4f007da3de39",
+              "name": "isEditMode",
+              "value": "={{ $items(\"Format Event Data\")[0].json.isEditMode }}",
+              "type": "boolean"
+            },
+            {
+              "id": "1bbe2e7b-315f-49d8-9cc6-734e3cdc06ef",
+              "name": "eventId",
+              "value": "={{ $items(\"Format Event Data\")[0].json.eventId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "090d51f6-06e1-4675-aa6a-f8ac0dc772b0",
+      "name": "Set Data with Attachment",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        40,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b6fdd15a-80cf-4f3a-988a-086b9d2893a1",
+              "name": "summary",
+              "value": "={{ $items(\"Format Event Data\")[0].json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "8b216a7d-a4b8-42ac-b2b5-647cd4f5403a",
+              "name": "description",
+              "value": "={{ $items(\"Format Event Data\")[0].json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "eef0f598-edcc-403c-adbd-270ba39e4619",
+              "name": "start",
+              "value": "={{ $items(\"Format Event Data\")[0].json.start }}",
+              "type": "string"
+            },
+            {
+              "id": "e8ace75b-2e79-4360-8202-df3860191544",
+              "name": "end",
+              "value": "={{ $items(\"Format Event Data\")[0].json.end }}",
+              "type": "string"
+            },
+            {
+              "id": "2b047e93-e1e2-42ff-9ef5-96e08c8a7342",
+              "name": "location",
+              "value": "={{ $items(\"Format Event Data\")[0].json.location }}",
+              "type": "string"
+            },
+            {
+              "id": "c27602dd-231f-43bf-a8f9-bff558197f74",
+              "name": "attendees",
+              "value": "={{ $items(\"Format Event Data\")[0].json.attendees.map(attendee => attendee.email).join(',') }}",
+              "type": "string"
+            },
+            {
+              "id": "2832cd3a-1351-4fb1-be4b-5d1ed2445e92",
+              "name": "RRULE",
+              "value": "={{ $items(\"Format Event Data\")[0].json.RRULE }}",
+              "type": "string"
+            },
+            {
+              "id": "68eda53c-07a0-4090-8b59-8215b730ffd2",
+              "name": "eventId",
+              "value": "={{ $items(\"Format Event Data\")[0].json.eventId }}",
+              "type": "string"
+            },
+            {
+              "id": "c2609c7a-ebc3-48f6-a476-d139ada4278e",
+              "name": "isEditMode",
+              "value": "={{ $items(\"Format Event Data\")[0].json.isEditMode }}",
+              "type": "boolean"
+            },
+            {
+              "id": "0e8f0a95-db99-4f75-a5ba-793a935e7016",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c4a497f9-2f9c-4f97-aabe-29b0722b2a31",
+      "name": "Set Data No New Attachment",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -140,
+        340
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "faef64a8-7d04-469e-be1b-dd3b9e4c7c0c",
+      "name": "Merge Attachment Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        220,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dfb3f123-378f-4923-8bfd-aea83633ebfe",
+              "leftValue": "={{$json.isEditMode}}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        380,
+        180
+      ],
+      "id": "fe76d724-924f-4228-89db-097dfc5372ad",
+      "name": "If Edit or Create?"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d00c9760-1f93-43d3-8fad-94d81321aa93",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "eventFile"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -920,
+        260
+      ],
+      "id": "95e34b3d-7324-4979-9ffa-f3e17bc5cee9",
+      "name": "Webhook - Create Event",
+      "webhookId": "1ce0d80f-de5f-47b5-b3dc-6093ac7dac17",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst formData = item.json.body;\nconst binaryData = item.binary;\n\n// --- BAGIAN YANG DIPERBAIKI ---\n// Kita akan menentukan isEditMode berdasarkan keberadaan eventId.\n// Ini lebih andal daripada mengandalkan field dari form.\nconst isActuallyEditMode = !!formData.eventId;\n// Tanda '!!' mengubah nilai apa pun (string, null, undefined) menjadi boolean murni.\n// Jika eventId ada (bukan string kosong), hasilnya true. Jika tidak, hasilnya false.\n// --- AKHIR BAGIAN YANG DIPERBAIKI ---\n\n\nconst formatDateTimeLocal = (dateStr) => {\n  if (!dateStr) return null;\n  if (dateStr.length === 16) {\n    return dateStr + ':00';\n  }\n  return dateStr;\n};\n\n// KODE BARU\nconst attendeeEmails = formData.attendeeEmails ? formData.attendeeEmails.split(',').map(e => e.trim()) : [];\nconst adminEmail = formData.adminEmail ? [formData.adminEmail.trim()] : [];\n\n// Gabungkan email admin dan undangan, hapus duplikat dan entri kosong\nconst allUniqueEmails = [...new Set([...adminEmail, ...attendeeEmails])].filter(Boolean);\n\n// Buat format array of objects yang benar\nconst attendeesArray = allUniqueEmails.map(email => ({ email: email }));\n\nlet rrule = '';\nif (formData.recurrence && formData.recurrence !== 'none') {\n  const freqMap = { 'daily': 'FREQ=DAILY', 'weekly': 'FREQ=WEEKLY', 'monthly': 'FREQ=MONTHLY' };\n  rrule = freqMap[formData.recurrence] || '';\n}\n\nconst outputJson = {\n  summary: formData.summary,\n  description: formData.description || '',\n  start: formatDateTimeLocal(formData.start),\n  end: formatDateTimeLocal(formData.end),\n  location: formData.location || '',\n  attendees: attendeesArray,\n  RRULE: rrule,\n  eventId: formData.eventId || '',\n  // --- Gunakan variabel baru yang andal di sini ---\n  isEditMode: isActuallyEditMode, \n  removeAttachment: formData.removeAttachment === 'true' || formData.removeAttachment === true\n};\n\nconst output = { json: outputJson };\n\nif (binaryData && Object.keys(binaryData).length > 0) {\n  const binaryKey = Object.keys(binaryData)[0];\n  const fileObject = binaryData[binaryKey];\n  output.binary = { [binaryKey]: fileObject };\n  output.json.originalFileName = fileObject.fileName;\n  output.json.hasNewAttachment = true;\n  output.json.binaryPropertyName = binaryKey;\n} else {\n  output.json.hasNewAttachment = false;\n}\n\nif (!output.json.description) {\n    output.json.description = '';\n}\n\nreturn [output];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -660,
+        180
+      ],
+      "id": "b2cd01df-9e8f-4ccb-92b8-285232692479",
+      "name": "Format Event Data"
+    },
+    {
+      "parameters": {
+        "path": "get-event-details",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -920,
+        460
+      ],
+      "id": "3de2a915-3bcb-4c67-8047-af323416f7ec",
+      "name": "Webhook - Get Event Details",
+      "webhookId": "f3857498-dd32-4650-b2fa-212141233c8d"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "calendar": {
+          "__rl": true,
+          "value": "isi-ska@gm.isi-ska.ac.id",
+          "mode": "list",
+          "cachedResultName": "isi-ska@gm.isi-ska.ac.id"
+        },
+        "eventId": "={{$json.query.eventId}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -700,
+        460
+      ],
+      "id": "824818b1-4b55-4d99-864c-4865b4b9a25d",
+      "name": "Google Calendar - Get Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "U8owCLLzBv0O1ME8",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        -500,
+        460
+      ],
+      "id": "2ed980b4-35c5-4782-acff-d7526b227850",
+      "name": "Respond to Webhook - Get"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "delete-event",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -920,
+        660
+      ],
+      "id": "280c5e03-480b-4eff-9434-e6860ff2d5a3",
+      "name": "Webhook - Delete Event",
+      "webhookId": "53bf2865-ad58-4f29-89ba-b9c5d22e19ca"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "isi-ska@gm.isi-ska.ac.id",
+          "mode": "list",
+          "cachedResultName": "isi-ska@gm.isi-ska.ac.id"
+        },
+        "eventId": "={{$json.query.eventId}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -700,
+        660
+      ],
+      "id": "6be2d4bb-2b0d-4ef0-95ae-323b384cd35c",
+      "name": "Google Calendar - Delete Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "U8owCLLzBv0O1ME8",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"message\": \"Acara berhasil dihapus!\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        -500,
+        660
+      ],
+      "id": "082ad482-22e3-4d25-9167-c893aa51fb98",
+      "name": "Respond to Webhook - Delete"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "update-event",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "eventFile"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -920,
+        80
+      ],
+      "id": "63e71444-5d83-4bb1-820c-9d4565e3ea76",
+      "name": "Webhook - Update Event",
+      "webhookId": "ae54b31e-2268-4933-a42f-01a6ce785e4a"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"message\": \"Acara berhasil diperbarui!\",\n  \"eventId\": \"{{$json.id}}\",\n  \"eventLink\": \"{{$json.htmlLink}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1020,
+        20
+      ],
+      "id": "886c1c58-7c9c-48a2-88d5-055e44125e8e",
+      "name": "Respond to Webhook - Update"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "summary",
+              "value": "={{$json.summary}}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.attachments ? ($json.description + \"\\n\\n---\\nDokumen Lampiran:\\n\" + $items(\"Google Drive - Upload File\")[0].json.webViewLink) : $json.description }}"
+            },
+            {
+              "name": "location",
+              "value": "={{$json.location}}"
+            },
+            {
+              "name": "start",
+              "value": "={{ {\"dateTime\": $json.start, \"timeZone\": \"Asia/Jakarta\"} }}"
+            },
+            {
+              "name": "end",
+              "value": "={{ {\"dateTime\": $json.end, \"timeZone\": \"Asia/Jakarta\"} }}"
+            },
+            {
+              "name": "attendees",
+              "value": "={{ $json.attendees.split(',').map(email => ({\"email\": email})) }}"
+            },
+            {
+              "name": "attachments",
+              "value": "={{ $json.attachments }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        340
+      ],
+      "id": "8518a905-0d1a-46c8-a4bc-7cdf74ba6781",
+      "name": "HTTP Request - Create Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "U8owCLLzBv0O1ME8",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $json.updateUrl }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "summary",
+              "value": "={{$json.summary}}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.attachments ? ($json.description.split('---')[0].trim() + \"\\n\\n---\\nDokumen Lampiran:\\n\" + $items(\"Google Drive - Upload File\")[0].json.webViewLink) : $json.description }}"
+            },
+            {
+              "name": "location",
+              "value": "={{$json.location}}"
+            },
+            {
+              "name": "start",
+              "value": "={{ {\"dateTime\": $json.start, \"timeZone\": \"Asia/Jakarta\"} }}"
+            },
+            {
+              "name": "end",
+              "value": "={{ {\"dateTime\": $json.end, \"timeZone\": \"Asia/Jakarta\"} }}"
+            },
+            {
+              "name": "attendees",
+              "value": "={{ $json.attendees.split(',').map(email => ({\"email\": email})) }}"
+            },
+            {
+              "name": "attachments",
+              "value": "={{ $json.attachments }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        820,
+        20
+      ],
+      "id": "cf7b1400-ecd2-4a09-9ef8-39aa8d4137c4",
+      "name": "HTTP Request - Update Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "U8owCLLzBv0O1ME8",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -140,
+        160
+      ],
+      "id": "1fdb2f74-c636-4a46-82c7-8061d44927ba",
+      "name": "Google Drive - Permission",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "eUeGE2F0i5oQ7oT3",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ambil item yang masuk\nconst item = $input.first();\n\n// Bangun URL menggunakan template literal\nconst eventId = item.json.eventId;\nconst updateUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}?conferenceDataVersion=1`;\n\n// Tambahkan URL yang sudah jadi ke data json\nitem.json.updateUrl = updateUrl;\n\n// Kembalikan item dengan data yang sudah diperbarui\nreturn [item];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        20
+      ],
+      "id": "7a2809d6-7be0-458e-b9ca-c07f1a0001b0",
+      "name": "Code: Build Update URL"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"message\": \"Undangan telah terkirim ke google kalender!\",\n  \"eventId\": \"{{$json.id}}\",\n  \"eventLink\": \"{{$json.htmlLink}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        820,
+        340
+      ],
+      "id": "b0d91973-c31d-4395-bba9-d3fc4f33fdcd",
+      "name": "Respond to Webhook - Create Event"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "check-availability",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        1000
+      ],
+      "id": "20b9a1a8-31a6-46b7-884f-a0b5ceccdd0a",
+      "name": "Webhook - Check Availability",
+      "webhookId": "a4e2c99e-874b-4dce-aae1-4f5223247085"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "347d5f0b-6867-4560-b680-b9b8066f4af1",
+              "leftValue": "={{$json.isBusy}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -60,
+        1000
+      ],
+      "id": "bd72450b-4834-425b-82ae-f1cd50b582e8",
+      "name": "If Busy?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"busy\",\n  \"message\": \"Jadwal sudah terisi. Silakan pilih waktu lain.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        900
+      ],
+      "id": "560f9239-6f60-4876-b6ae-eee1a35f9bd5",
+      "name": "Respond - Busy"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"free\",\n  \"message\": \"Waktu tersedia!\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        1100
+      ],
+      "id": "d5e97a2e-2f33-4ba0-b5c2-51cc48097410",
+      "name": "Respond - Free"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\n\n// Fungsi ini akan membuat timestamp RFC3339 dengan offset zona waktu yang benar.\nconst formatDateTimeWithOffset = (dateStr) => {\n  if (!dateStr) return null;\n  const date = new Date(dateStr);\n  const pad = (num) => num.toString().padStart(2, '0');\n  const year = date.getFullYear();\n  const month = pad(date.getMonth() + 1);\n  const day = pad(date.getDate());\n  const hours = pad(date.getHours());\n  const minutes = pad(date.getMinutes());\n  const seconds = pad(date.getSeconds());\n  const timezoneOffset = '+07:00';\n  \n  // Pastikan baris ini menggunakan backtick (`), bukan tanda kutip, dan tidak ada tag HTML.\n  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${timezoneOffset}`;\n};\n\n// 1. Siapkan daftar kalender yang akan diperiksa\nconst organizationalCalendar = 'isi-ska@gm.isi-ska.ac.id';\nconst attendeeEmails = body.attendeeEmails \n  ? body.attendeeEmails.split(',').map(email => email.trim()).filter(email => email)\n  : [];\nconst allCalendarsToCheck = [...new Set([organizationalCalendar, ...attendeeEmails])];\nconst calendarsToQuery = allCalendarsToCheck.map(email => ({ id: email }));\n\n// 2. Buat \"paket\" data lengkap untuk dikirim ke Google API\nconst apiRequest = {\n  timeMin: formatDateTimeWithOffset(body.start),\n  timeMax: formatDateTimeWithOffset(body.end),\n  items: calendarsToQuery\n};\n\n// 3. Kembalikan paket data ini untuk digunakan oleh node HTTP Request\nreturn [{\n  json: {\n    apiRequest: apiRequest\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -680,
+        1000
+      ],
+      "id": "22c7c43b-a0d1-46ae-a2af-0c708a385e67",
+      "name": "Code: Prepare Availability Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/freeBusy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json.apiRequest}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -460,
+        1000
+      ],
+      "id": "b439f459-311f-459b-8eed-24b8a2cbb1fa",
+      "name": "HTTP Request - Check Availability",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "U8owCLLzBv0O1ME8",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const freeBusyData = $json;\nlet isBusy = false;\n\n// Periksa apakah ada kalender yang sibuk\nif (freeBusyData.calendars) {\n  for (const calendarId in freeBusyData.calendars) {\n    if (freeBusyData.calendars[calendarId].busy.length > 0) {\n      isBusy = true;\n      break; // Jika sudah ketemu satu yang sibuk, tidak perlu cek lagi\n    }\n  }\n}\n\n// Kembalikan hasil sederhana: true atau false\nreturn [{ json: { isBusy: isBusy } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        1000
+      ],
+      "id": "322fb9f9-b8db-441a-a282-19c70f8c96ff",
+      "name": "Code: Parse Availability Result"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If New File Uploaded?": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Upload File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Data No New Attachment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive - Upload File": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Permission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Data with Attachment": {
+      "main": [
+        [
+          {
+            "node": "Merge Attachment Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Data No New Attachment": {
+      "main": [
+        [
+          {
+            "node": "Merge Attachment Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Attachment Data": {
+      "main": [
+        [
+          {
+            "node": "If Edit or Create?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Edit or Create?": {
+      "main": [
+        [
+          {
+            "node": "Code: Build Update URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request - Create Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Create Event": {
+      "main": [
+        [
+          {
+            "node": "Format Event Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Event Data": {
+      "main": [
+        [
+          {
+            "node": "If New File Uploaded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Get Event Details": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar - Get Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar - Get Event": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Delete Event": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar - Delete Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar - Delete Event": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Update Event": {
+      "main": [
+        [
+          {
+            "node": "Format Event Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Create Event": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Create Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Update Event": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive - Permission": {
+      "main": [
+        [
+          {
+            "node": "Set Data with Attachment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build Update URL": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Update Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Check Availability": {
+      "main": [
+        [
+          {
+            "node": "Code: Prepare Availability Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Busy?": {
+      "main": [
+        [
+          {
+            "node": "Respond - Busy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond - Free",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Prepare Availability Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Check Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Check Availability": {
+      "main": [
+        [
+          {
+            "node": "Code: Parse Availability Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Parse Availability Result": {
+      "main": [
+        [
+          {
+            "node": "If Busy?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "6006fd4a-66eb-48e1-8c28-a3b7b3ac3a52",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fcd299f5a5697299d719cdc3bbdc21922be484b700099c7262b510ec5f0fd802"
+  },
+  "id": "fI6HDmQIDKJnNjdM",
+  "tags": []
+}
