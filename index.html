@@ -19,7 +19,8 @@
       border-radius: 0.5rem; /* rounded-lg */
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); /* shadow-lg */
       width: 100%; /* w-full */
-      max-width: 400px; /* max-w-md */
+      /* PERUBAHAN BARU: Melebarkan container untuk kenyamanan visual di desktop */
+      max-width: 576px; /* max-w-lg */
       margin: 2rem auto;
     }
     .calendar-embed-container {
@@ -225,7 +226,6 @@
     const checkAvailabilityButton = document.getElementById("checkAvailabilityButton");
     const availabilityResult = document.getElementById("availabilityResult");
 
-    // PERUBAHAN BARU: Deklarasi elemen input waktu untuk event listener
     const startInput = document.getElementById("start");
     const endInput = document.getElementById("end");
 
@@ -236,6 +236,28 @@
     let originalDeleteButtonText = deleteEventButton.textContent;
 
     // --- Fungsi Bantuan ---
+    
+    // PERUBAHAN BARU: Fungsi untuk menyalin teks ke clipboard
+    function copyToClipboard(text, buttonElement) {
+        // Fallback method
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            // Beri notifikasi singkat bahwa teks berhasil disalin
+            const originalText = buttonElement.textContent;
+            buttonElement.textContent = 'Tersalin!';
+            setTimeout(() => {
+                buttonElement.textContent = originalText;
+            }, 1500);
+        } catch (err) {
+            console.error('Gagal menyalin teks: ', err);
+            alert('Gagal menyalin ID.');
+        }
+        document.body.removeChild(textarea);
+    }
 
     function showMessageBox(message, eventId = null, eventLink = null, isConfirmation = false, confirmCallback = null) {
         messageText.textContent = message;
@@ -243,7 +265,11 @@
         customDialogButtons.innerHTML = "";
 
         if (eventId) {
-            eventDetailsOutput.innerHTML += `<p class="mt-2"><strong>ID Acara:</strong> <span>${eventId}</span></p>`;
+            // PERUBAHAN BARU: Menambahkan tombol "Salin"
+            let eventIdHtml = `<p class="mt-2"><strong>ID Acara:</strong> <span>${eventId}</span>`;
+            eventIdHtml += ` <button onclick="copyToClipboard('${eventId}', this)" class="ml-2 px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300" title="Salin ID">Salin</button>`;
+            eventIdHtml += `</p>`;
+            eventDetailsOutput.innerHTML += eventIdHtml;
         }
         if (eventLink) {
             eventDetailsOutput.innerHTML += `<p><a href="${eventLink}" target="_blank" class="text-blue-600 hover:underline">Lihat di Google Kalender</a></p>`;
@@ -303,7 +329,6 @@
         availabilityResult.textContent = "";
     }
     
-    // PERUBAHAN BARU: Fungsi untuk mengisi form dari data acara (Ekstraksi Logika)
     function populateForm(eventData) {
         document.getElementById("summary").value = eventData.summary || "";
         const descriptionText = eventData.description || "";
@@ -330,7 +355,6 @@
           attendeeEmailsInput.value = "";
         }
         
-        // PERUBAHAN BARU: Deteksi dan tampilkan lampiran dari deskripsi
         currentAttachmentsContainer.innerHTML = ''; 
         removeAttachmentWrapper.classList.add('hidden');
         removeAttachmentCheckbox.checked = false;
@@ -346,14 +370,12 @@
             attachmentsHtml += '</ul>';
             currentAttachmentsContainer.innerHTML = attachmentsHtml;
 
-            // Juga tampilkan opsi untuk menghapus lampiran
             removeAttachmentWrapper.classList.remove('hidden');
         } else {
             removeAttachmentWrapper.classList.add('hidden');
         }
     }
 
-    // PERUBAHAN BARU: Fungsi untuk membersihkan status ketersediaan
     function clearAvailabilityStatus() {
         availabilityResult.textContent = "";
     }
@@ -403,7 +425,6 @@
             
             eventIdInput.value = eventIdToLoad;
             
-            // PERUBAHAN BARU: Panggil fungsi terpusat untuk mengisi form
             populateForm(eventData);
 
             showMessageBox("Detail acara berhasil dimuat.");
@@ -525,7 +546,6 @@
         }
     });
 
-    // PERUBAHAN BARU: Tambahkan event listener untuk membersihkan status ketersediaan
     startInput.addEventListener('change', clearAvailabilityStatus);
     endInput.addEventListener('change', clearAvailabilityStatus);
 
@@ -560,9 +580,8 @@
       }
 
       const attendeeEmailsRaw = data.get("attendeeEmails");
-      // PERUBAHAN BARU: Penanganan input email yang lebih fleksibel
       const attendeeEmails = attendeeEmailsRaw
-        .split(/[\s,;]+/) // Memisahkan dengan spasi, koma, atau titik koma
+        .split(/[\s,;]+/) 
         .map(email => email.trim())
         .filter(email => email.length > 0);
 
